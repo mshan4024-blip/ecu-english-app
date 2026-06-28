@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECU英語学習アプリ</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:#f5f4f0;color:#1a1a18;min-height:100vh}
+
+  /* Header */
+  .header{background:#1a1a18;color:#f5f4f0;padding:1.25rem 2rem;display:flex;align-items:center;justify-content:space-between}
+  .header-title{font-size:15px;font-weight:500;letter-spacing:0.04em}
+  .header-sub{font-size:12px;color:#888;margin-top:2px}
+  .header-badge{background:#e8500a;color:#fff;font-size:11px;padding:4px 12px;border-radius:20px;font-weight:500;letter-spacing:0.03em}
+
+  /* Layout */
+  .layout{display:grid;grid-template-columns:220px 1fr;min-height:calc(100vh - 60px)}
+
+  /* Sidebar */
+  .sidebar{background:#211f1c;padding:1.5rem 0;border-right:1px solid #2e2c28}
+  .sidebar-section{padding:0 1rem 1.5rem}
+  .sidebar-label{font-size:10px;font-weight:600;letter-spacing:0.1em;color:#666;text-transform:uppercase;padding:0 0.75rem;margin-bottom:0.5rem}
+  .nav-item{display:flex;align-items:center;gap:10px;padding:0.6rem 0.75rem;border-radius:8px;cursor:pointer;font-size:13px;color:#aaa;transition:all 0.15s}
+  .nav-item:hover{background:#2e2c28;color:#f5f4f0}
+  .nav-item.active{background:#e8500a22;color:#e8500a;font-weight:500}
+  .nav-icon{font-size:16px;width:20px;text-align:center}
+  .nav-divider{border:none;border-top:1px solid #2e2c28;margin:0.75rem 1rem}
+  .progress-box{background:#2e2c28;border-radius:10px;padding:0.875rem 1rem;margin:0 1rem}
+  .progress-title{font-size:11px;color:#888;margin-bottom:8px}
+  .progress-bar-bg{background:#3a3835;border-radius:4px;height:6px;overflow:hidden}
+  .progress-bar{background:#e8500a;height:100%;border-radius:4px;transition:width 0.4s ease}
+  .progress-label{font-size:12px;color:#ccc;margin-top:6px;text-align:right}
+
+  /* Main */
+  .main{padding:2rem;overflow-y:auto}
+  .section{display:none}
+  .section.active{display:block}
+
+  /* Script section */
+  .audio-player{background:#fff;border-radius:14px;padding:1.25rem 1.5rem;margin-bottom:1.5rem;border:1px solid #e5e3de;display:flex;align-items:center;gap:16px}
+  .play-btn{width:44px;height:44px;border-radius:50%;background:#e8500a;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:transform 0.1s,background 0.15s}
+  .play-btn:hover{background:#c73f06;transform:scale(1.05)}
+  .play-btn svg{width:18px;height:18px;fill:#fff;margin-left:2px}
+  .play-btn.playing svg.play-icon{display:none}
+  .play-btn.playing svg.pause-icon{display:block}
+  .play-btn svg.pause-icon{display:none;margin-left:0}
+  .audio-info{flex:1}
+  .audio-title{font-size:13px;font-weight:500;color:#1a1a18;margin-bottom:4px}
+  .audio-sub{font-size:12px;color:#888}
+  .audio-progress-wrap{flex:1;display:flex;flex-direction:column;gap:6px}
+  .audio-timeline{height:4px;background:#e5e3de;border-radius:2px;cursor:pointer;position:relative;overflow:hidden}
+  .audio-timeline-fill{height:100%;background:#e8500a;border-radius:2px;width:0%;transition:width 0.1s linear;pointer-events:none}
+  .audio-time{font-size:11px;color:#aaa;text-align:right}
+  .speed-btn{background:#f5f4f0;border:1px solid #e5e3de;border-radius:6px;padding:4px 10px;font-size:12px;cursor:pointer;color:#555;font-weight:500}
+  .speed-btn:hover{background:#ebe9e4}
+
+  .legend{display:flex;gap:12px;margin-bottom:1rem;flex-wrap:wrap}
+  .leg{display:flex;align-items:center;gap:6px;font-size:12px;color:#666}
+  .leg-dot{width:8px;height:8px;border-radius:50%}
+  .dot-key{background:#e8500a}.dot-tech{background:#1d8a5c}.dot-phrase{background:#b07d12}
+
+  .script-block{background:#fff;border-radius:14px;padding:1.5rem;border:1px solid #e5e3de;margin-bottom:1rem}
+  .block-num{font-size:11px;font-weight:600;color:#aaa;letter-spacing:0.08em;margin-bottom:0.75rem;text-transform:uppercase}
+  .script-line{font-size:15px;line-height:2;color:#1a1a18}
+  .key{background:#fef0e8;color:#c73f06;padding:1px 6px;border-radius:4px;cursor:pointer;font-weight:500;border-bottom:1.5px solid #e8500a44;transition:background 0.1s}
+  .key:hover{background:#fde4d4}
+  .tech{background:#e8f6ef;color:#0f6e56;padding:1px 6px;border-radius:4px;cursor:pointer;font-weight:500;border-bottom:1.5px solid #1d8a5c44}
+  .tech:hover{background:#d0eddf}
+  .phrase{background:#fef8e8;color:#8a5f0a;padding:1px 6px;border-radius:4px;cursor:pointer;font-weight:500;border-bottom:1.5px solid #b07d1244}
+  .phrase:hover{background:#fdf0d0}
+  .popup{display:none;background:#1a1a18;color:#f5f4f0;border-radius:10px;padding:0.875rem 1rem;margin-top:0.5rem;font-size:13px;position:relative}
+  .popup.show{display:block}
+  .popup-title{font-weight:600;font-size:13px;color:#e8a07a;margin-bottom:4px}
+  .popup-body{color:#ccc;line-height:1.65}
+  .popup-close{position:absolute;top:8px;right:10px;cursor:pointer;color:#888;font-size:16px;background:none;border:none;line-height:1}
+
+  /* Slash section */
+  .slash-block{background:#fff;border-radius:14px;padding:1.5rem;border:1px solid #e5e3de;margin-bottom:1rem}
+  .slash-line{font-size:15px;line-height:2.3;color:#1a1a18}
+  .slash{color:#ddd;font-weight:300;margin:0 2px}
+  .slash-tip{background:#e8500a11;border-left:3px solid #e8500a;padding:0.875rem 1rem;border-radius:0 8px 8px 0;font-size:13px;color:#555;margin-bottom:1.25rem;line-height:1.65}
+  .slash-tip strong{color:#c73f06}
+
+  /* Vocab section */
+  .vocab-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px}
+  .vocab-card{background:#fff;border:1px solid #e5e3de;border-radius:12px;padding:1rem 1.125rem;cursor:pointer;transition:border-color 0.15s,box-shadow 0.15s}
+  .vocab-card:hover{border-color:#c0bdb6;box-shadow:0 2px 8px rgba(0,0,0,0.06)}
+  .vocab-card.open{border-color:#e8500a44;box-shadow:0 2px 12px rgba(232,80,10,0.08)}
+  .vocab-header{display:flex;align-items:flex-start;justify-content:space-between;gap:8px}
+  .vocab-word{font-weight:600;font-size:14px;color:#1a1a18;margin-bottom:2px}
+  .vocab-pos{font-size:11px;color:#aaa;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:6px}
+  .vocab-jp{font-size:13px;color:#444}
+  .vocab-badge{display:inline-block;font-size:10px;padding:2px 8px;border-radius:20px;font-weight:500;margin-top:6px}
+  .badge-key{background:#fef0e8;color:#c73f06}
+  .badge-tech{background:#e8f6ef;color:#0f6e56}
+  .badge-phrase{background:#fef8e8;color:#8a5f0a}
+  .vocab-ex{font-size:12px;color:#666;font-style:italic;display:none;margin-top:10px;padding-top:10px;border-top:1px solid #f0ede8;line-height:1.7}
+  .vocab-card.open .vocab-ex{display:block}
+  .vocab-chevron{color:#ccc;font-size:14px;margin-top:2px;transition:transform 0.2s;flex-shrink:0}
+  .vocab-card.open .vocab-chevron{transform:rotate(180deg)}
+  .quiz-btn{margin-top:1.5rem;background:#e8500a;color:#fff;border:none;border-radius:10px;padding:0.875rem 1.5rem;font-size:14px;font-weight:500;cursor:pointer;transition:background 0.15s}
+  .quiz-btn:hover{background:#c73f06}
+
+  /* Section headers */
+  .section-header{margin-bottom:1.5rem}
+  .section-title{font-size:20px;font-weight:600;color:#1a1a18;margin-bottom:4px}
+  .section-desc{font-size:13px;color:#888}
+
+  /* Scrollbar */
+  ::-webkit-scrollbar{width:6px}
+  ::-webkit-scrollbar-track{background:transparent}
+  ::-webkit-scrollbar-thumb{background:#ccc;border-radius:3px}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <div class="header-title">英語スピーキング学習</div>
+    <div class="header-sub">北米MTG向け · E/Eアーキテクチャ</div>
+  </div>
+  <div class="header-badge">STEP 3</div>
+</div>
+
+<div class="layout">
+  <div class="sidebar">
+    <div class="sidebar-section">
+      <div class="sidebar-label">学習メニュー</div>
+      <div class="nav-item active" onclick="switchTab('script',this)">
+        <span class="nav-icon">📄</span>スクリプト
+      </div>
+      <div class="nav-item" onclick="switchTab('slash',this)">
+        <span class="nav-icon">✂️</span>スラッシュ読み
+      </div>
+      <div class="nav-item" onclick="switchTab('vocab',this)">
+        <span class="nav-icon">📚</span>単語帳
+      </div>
+    </div>
+    <hr class="nav-divider">
+    <div class="sidebar-section">
+      <div class="sidebar-label">学習の進捗</div>
+      <div class="progress-box">
+        <div class="progress-title">タップした解説</div>
+        <div class="progress-bar-bg"><div class="progress-bar" id="progressBar" style="width:0%"></div></div>
+        <div class="progress-label"><span id="progressCount">0</span> / 11</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="main">
+
+    <!-- Script Section -->
+    <div id="script" class="section active">
+      <div class="section-header">
+        <div class="section-title">スクリプト &amp; 音声</div>
+        <div class="section-desc">フレーズをタップして解説を確認。音声を聞きながら感情を込めて音読しよう。</div>
+      </div>
+
+      <div class="audio-player">
+        <button class="play-btn" id="playBtn" onclick="togglePlay()">
+          <svg class="play-icon" viewBox="0 0 24 24"><polygon points="5,3 19,12 5,21"/></svg>
+          <svg class="pause-icon" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+        </button>
+        <div class="audio-info">
+          <div class="audio-title">E/E Architecture Strategy Script</div>
+          <div class="audio-sub">全文 · 約2分30秒</div>
+        </div>
+        <div class="audio-progress-wrap">
+          <div class="audio-timeline" onclick="seekAudio(event)" id="audioTimeline">
+            <div class="audio-timeline-fill" id="timelineFill"></div>
+          </div>
+          <div class="audio-time" id="audioTime">0:00 / 0:00</div>
+        </div>
+        <button class="speed-btn" id="speedBtn" onclick="cycleSpeed()">1.0×</button>
+      </div>
+
+      <audio id="audioEl"></audio>
+
+      <div class="legend">
+        <div class="leg"><div class="leg-dot dot-key"></div>重要フレーズ</div>
+        <div class="leg"><div class="leg-dot dot-tech"></div>技術用語</div>
+        <div class="leg"><div class="leg-dot dot-phrase"></div>会話表現</div>
+      </div>
+
+      <div class="script-block">
+        <div class="block-num">導入</div>
+        <div class="script-line">
+          <span class="phrase" onclick="toggle('p1')">Today, I'd like to share our thinking</span> on <span class="tech" onclick="toggle('t1')">E/E architecture</span> toward realizing a <span class="key" onclick="toggle('k1')">stress-free vehicle experience</span> — automatic door opening, human-sensing services, and seamless <span class="tech" onclick="toggle('t2')">OTA updates</span>.
+        </div>
+        <div id="p1" class="popup"><button class="popup-close" onclick="closePopup('p1')">×</button><div class="popup-title">I'd like to share our thinking</div><div class="popup-body">「私たちの考えを共有させてください」。会議冒頭の丁寧な導入。"I want to tell you~"より格段にプロらしい表現。</div></div>
+        <div id="t1" class="popup"><button class="popup-close" onclick="closePopup('t1')">×</button><div class="popup-title">E/E architecture（電子・電気アーキテクチャ）</div><div class="popup-body">Electrical/Electronic architecture の略。車両の電子システム全体の設計思想・構造を指す。</div></div>
+        <div id="k1" class="popup"><button class="popup-close" onclick="closePopup('k1')">×</button><div class="popup-title">stress-free vehicle experience</div><div class="popup-body">このMTGの最上位目標。最初に示すことで、以降の技術議論に文脈を与える重要なフレーミング。</div></div>
+        <div id="t2" class="popup"><button class="popup-close" onclick="closePopup('t2')">×</button><div class="popup-title">OTA updates（Over-The-Air updates）</div><div class="popup-body">無線通信を使ったソフトウェアアップデート。ディーラー入庫不要で車両を常に最新状態に保てる。</div></div>
+      </div>
+
+      <div class="script-block">
+        <div class="block-num">課題定義</div>
+        <div class="script-line">
+          The <span class="key" onclick="toggle('k2')">core challenge we're addressing</span> is this: current architectures <span class="phrase" onclick="toggle('p2')">distribute intelligence</span> — like <span class="tech" onclick="toggle('t3')">arbitration logic</span> — across many <span class="tech" onclick="toggle('t4')">edge ECUs</span>. This makes OTA updates complex and hardware changes frequent. Looking ahead, we believe the industry is <span class="phrase" onclick="toggle('p3')">moving toward a model where</span> <span class="key" onclick="toggle('k3')">variable logic is centralized</span> in higher-level ECUs, with edge ECUs retaining only the minimum necessary to <span class="tech" onclick="toggle('t5')">drive actuators</span>.
+        </div>
+        <div id="k2" class="popup"><button class="popup-close" onclick="closePopup('k2')">×</button><div class="popup-title">core challenge we're addressing</div><div class="popup-body">「私たちが取り組んでいる核心的な課題」。"problem"より前向きで、解決策を持っている印象を与える。</div></div>
+        <div id="p2" class="popup"><button class="popup-close" onclick="closePopup('p2')">×</button><div class="popup-title">distribute intelligence</div><div class="popup-body">「頭脳機能を分散させる」。ECUの調停・判断機能が各所に散らばっている現状を表す自然な表現。</div></div>
+        <div id="t3" class="popup"><button class="popup-close" onclick="closePopup('t3')">×</button><div class="popup-title">arbitration logic（調停ロジック）</div><div class="popup-body">複数のシステムからの指令が競合した際に優先順位を決める制御ロジック。エッジECUに分散させると変更が困難になる。</div></div>
+        <div id="t4" class="popup"><button class="popup-close" onclick="closePopup('t4')">×</button><div class="popup-title">edge ECUs（エッジECU）</div><div class="popup-body">ネットワークの末端に位置し、アクチュエータを直接制御するECU。上位のセントラルECUと対比して使われる。</div></div>
+        <div id="p3" class="popup"><button class="popup-close" onclick="closePopup('p3')">×</button><div class="popup-title">moving toward a model where~</div><div class="popup-body">「〜というモデルに向かっている」。業界トレンドとして述べることで、自社だけの意見ではなく大きな流れだと示せる。</div></div>
+        <div id="k3" class="popup"><button class="popup-close" onclick="closePopup('k3')">×</button><div class="popup-title">variable logic is centralized</div><div class="popup-body">「変動ロジックが集約される」。このMTGの核心メッセージ。変動する制御判断を上位ECUに集めることでエッジ側を単純化できる。</div></div>
+        <div id="t5" class="popup"><button class="popup-close" onclick="closePopup('t5')">×</button><div class="popup-title">drive actuators（アクチュエータを駆動する）</div><div class="popup-body">モーターや電磁弁など物理的な動作をする部品を動かすこと。エッジECUに残すべき最低限の機能。</div></div>
+      </div>
+
+      <div class="script-block">
+        <div class="block-num">エリアECUのコンセプト</div>
+        <div class="script-line">
+          A key part of our concept is that <span class="key" onclick="toggle('k4')">everything below the area ECU — all variable elements — would be absorbed within that zone</span>. Importantly, we see the <span class="phrase" onclick="toggle('p4')">system architecture below the area ECU as our domain to define and own</span>. This is not just a component play — we want to <span class="key" onclick="toggle('k5')">take responsibility for the full sub-system specification</span> in that zone.
+        </div>
+        <div id="k4" class="popup"><button class="popup-close" onclick="closePopup('k4')">×</button><div class="popup-title">absorbed within that zone</div><div class="popup-body">「そのゾーン内で吸収する」。変動要素をエリアECU以下で完結させるという概念をシンプルに表現している。</div></div>
+        <div id="p4" class="popup"><button class="popup-close" onclick="closePopup('p4')">×</button><div class="popup-title">our domain to define and own</div><div class="popup-body">「私たちが定義し、責任を持つ領域」。単なる部品供給者ではなくシステムインテグレーターとしての立場を示す重要表現。</div></div>
+        <div id="k5" class="popup"><button class="popup-close" onclick="closePopup('k5')">×</button><div class="popup-title">take responsibility for the full sub-system specification</div><div class="popup-body">「サブシステム仕様全体に責任を持つ」。OEMへの強いアピールポイント。弊社がシステムを理解しているからこそ言える。</div></div>
+      </div>
+
+      <div class="script-block">
+        <div class="block-num">統合範囲</div>
+        <div class="script-line">
+          Our current thinking is to have <span class="key" onclick="toggle('k6')">one ECU drive both front and rear door components</span>, focusing integration on <span class="phrase" onclick="toggle('p5')">high-fitment-rate components</span> — door mirrors, windows, and E-latches — while keeping highly optional components separate. On E-latches specifically, while <span class="tech" onclick="toggle('t6')">fitment rate</span> in mass-market vehicles is currently low, Honda's direction is to standardize them even in ICE and HEV mass-market vehicles. The timeline remains <span class="phrase" onclick="toggle('p6')">uncertain</span>.
+        </div>
+        <div id="k6" class="popup"><button class="popup-close" onclick="closePopup('k6')">×</button><div class="popup-title">one ECU drive both front and rear</div><div class="popup-body">「1つのECUでフロントとリアを両方駆動」。1ドア1ECUではなく、商材ベースで統合するという今回の最新案の核心。</div></div>
+        <div id="p5" class="popup"><button class="popup-close" onclick="closePopup('p5')">×</button><div class="popup-title">high-fitment-rate components</div><div class="popup-body">「搭載率の高い商材」。fitment rate = 装備率。どの車種にも付いている部品を統合対象にするという判断基準を表す重要な技術表現。</div></div>
+        <div id="t6" class="popup"><button class="popup-close" onclick="closePopup('t6')">×</button><div class="popup-title">fitment rate（装備率・搭載率）</div><div class="popup-body">ある機能・部品が車両に搭載される割合。高級車か大衆車か、BEVかICEかで大きく変わるため、統合範囲を決める重要指標。</div></div>
+        <div id="p6" class="popup"><button class="popup-close" onclick="closePopup('p6')">×</button><div class="popup-title">the timeline remains uncertain</div><div class="popup-body">「タイムラインはまだ不透明」。過大な約束を避けつつ方向性を示す誠実な表現。北米チームとの信頼関係を守るために重要。</div></div>
+      </div>
+
+      <div class="script-block">
+        <div class="block-num">弊社の差別化</div>
+        <div class="script-line">
+          <span class="phrase" onclick="toggle('p7')">As a company that handles a wide range of system products across domains</span>, we have the <span class="key" onclick="toggle('k7')">system-level knowledge to propose solutions that go beyond individual components</span> — for example, software-based value-added services tied to the overall architecture.
+        </div>
+        <div id="p7" class="popup"><button class="popup-close" onclick="closePopup('p7')">×</button><div class="popup-title">a company that handles a wide range of system products across domains</div><div class="popup-body">「幅広いドメインのシステム製品を扱う会社として」。競合批判ではなく自社の強みとして表現するスマートな差別化の言い方。</div></div>
+        <div id="k7" class="popup"><button class="popup-close" onclick="closePopup('k7')">×</button><div class="popup-title">system-level knowledge to propose solutions beyond individual components</div><div class="popup-body">「個々の部品を超えたソリューションを提案できるシステムレベルの知見」。このMTGで最も伝えたい差別化ポイント。</div></div>
+      </div>
+
+      <div class="script-block">
+        <div class="block-num">最重要メッセージ</div>
+        <div class="script-line">
+          <span class="phrase" onclick="toggle('p8')">The most critical message I want to share today</span> is this: the optimal E/E architecture will depend on volume, fitment rates, and target services. But <span class="key" onclick="toggle('k8')">it is essential that we start now — designing both hardware and software to be easily separable and reconfigurable</span>. What we are currently planning — <span class="phrase" onclick="toggle('p9')">still at the concept stage</span> — is to develop single-function ECUs so that <span class="key" onclick="toggle('k9')">individual functions can later be extracted and migrated upward without impacting other functions</span>. If cost optimization points toward it, a <span class="tech" onclick="toggle('t7')">mechatronic unit</span> — combining electronics and mechanics in one assembly — is also a valid path. <span class="phrase" onclick="toggle('p10')">We'd love to align with you on this direction.</span>
+        </div>
+        <div id="p8" class="popup"><button class="popup-close" onclick="closePopup('p8')">×</button><div class="popup-title">The most critical message I want to share today</div><div class="popup-body">「本日最も伝えたいメッセージ」。会議でここぞという主張の前に置くことで相手の注意を引き締める効果的なフレーズ。</div></div>
+        <div id="k8" class="popup"><button class="popup-close" onclick="closePopup('k8')">×</button><div class="popup-title">easily separable and reconfigurable</div><div class="popup-body">「容易に分割・再配置できる」。機能ごとに独立して切り出せ、配置を変えられる設計思想の核心。今から構えるべき方針。</div></div>
+        <div id="p9" class="popup"><button class="popup-close" onclick="closePopup('p9')">×</button><div class="popup-title">still at the concept stage</div><div class="popup-body">「まだ構想段階」。過大な約束を避けつつ方向性を示す誠実な表現。北米チームとの信頼関係に重要。</div></div>
+        <div id="k9" class="popup"><button class="popup-close" onclick="closePopup('k9')">×</button><div class="popup-title">extracted and migrated upward without impacting other functions</div><div class="popup-body">「他の機能に影響を与えずに上位に切り出して移行できる」。機能の独立性・分離性という設計思想を正確に伝える表現。</div></div>
+        <div id="t7" class="popup"><button class="popup-close" onclick="closePopup('t7')">×</button><div class="popup-title">mechatronic unit（機電一体ユニット）</div><div class="popup-body">ECUとモーターなどの機構部品を物理的に一体化したもの。ハーネスが不要になりコスト・重量削減に有効。</div></div>
+        <div id="p10" class="popup"><button class="popup-close" onclick="closePopup('p10')">×</button><div class="popup-title">We'd love to align with you on this direction</div><div class="popup-body">「この方向性について認識を合わせたい」。一方的な提案ではなく、協調して決めていこうというニュアンス。北米チームとの関係構築に効果的。</div></div>
+      </div>
+    </div>
+
+    <!-- Slash Section -->
+    <div id="slash" class="section">
+      <div class="section-header">
+        <div class="section-title">スラッシュ読み</div>
+        <div class="section-desc">意味の塊ごとに区切って、英語のリズムを体で覚えよう。</div>
+      </div>
+      <div class="slash-tip"><strong>読み方のコツ：</strong>スラッシュ（/）で区切られた塊ごとに、意味を理解しながら読みましょう。一語一語ではなく、塊で捉えるのが自然な英語のリズムです。</div>
+
+      <div class="slash-block">
+        <div class="block-num">導入</div>
+        <div class="slash-line">Today, <span class="slash">/</span> I'd like to share our thinking <span class="slash">/</span> on E/E architecture <span class="slash">/</span> toward realizing a stress-free vehicle experience <span class="slash">/</span> — automatic door opening, <span class="slash">/</span> human-sensing services, <span class="slash">/</span> and seamless OTA updates.</div>
+      </div>
+      <div class="slash-block">
+        <div class="block-num">課題定義</div>
+        <div class="slash-line">The core challenge <span class="slash">/</span> we're addressing <span class="slash">/</span> is this: <span class="slash">/</span> current architectures distribute intelligence <span class="slash">/</span> — like arbitration logic — <span class="slash">/</span> across many edge ECUs. <span class="slash">/</span> This makes OTA updates complex <span class="slash">/</span> and hardware changes frequent. <span class="slash">/</span> Looking ahead, <span class="slash">/</span> we believe the industry <span class="slash">/</span> is moving toward a model <span class="slash">/</span> where variable logic is centralized <span class="slash">/</span> in higher-level ECUs.</div>
+      </div>
+      <div class="slash-block">
+        <div class="block-num">エリアECUのコンセプト</div>
+        <div class="slash-line">A key part of our concept is that <span class="slash">/</span> everything below the area ECU <span class="slash">/</span> — all variable elements — <span class="slash">/</span> would be absorbed within that zone. <span class="slash">/</span> We see the system architecture <span class="slash">/</span> below the area ECU <span class="slash">/</span> as our domain <span class="slash">/</span> to define and own.</div>
+      </div>
+      <div class="slash-block">
+        <div class="block-num">統合範囲</div>
+        <div class="slash-line">Our current thinking is <span class="slash">/</span> to have one ECU drive <span class="slash">/</span> both front and rear door components, <span class="slash">/</span> focusing integration <span class="slash">/</span> on high-fitment-rate components <span class="slash">/</span> — door mirrors, windows, and E-latches — <span class="slash">/</span> while keeping highly optional components separate.</div>
+      </div>
+      <div class="slash-block">
+        <div class="block-num">弊社の差別化</div>
+        <div class="slash-line">As a company <span class="slash">/</span> that handles a wide range of system products <span class="slash">/</span> across domains, <span class="slash">/</span> we have the system-level knowledge <span class="slash">/</span> to propose solutions <span class="slash">/</span> that go beyond individual components.</div>
+      </div>
+      <div class="slash-block">
+        <div class="block-num">最重要メッセージ</div>
+        <div class="slash-line">The most critical message <span class="slash">/</span> I want to share today <span class="slash">/</span> is this: <span class="slash">/</span> it is essential <span class="slash">/</span> that we start now — <span class="slash">/</span> designing both hardware and software <span class="slash">/</span> to be easily separable <span class="slash">/</span> and reconfigurable. <span class="slash">/</span> We'd love to align with you <span class="slash">/</span> on this direction.</div>
+      </div>
+    </div>
+
+    <!-- Vocab Section -->
+    <div id="vocab" class="section">
+      <div class="section-header">
+        <div class="section-title">単語帳</div>
+        <div class="section-desc">カードをタップして例文を確認しよう。</div>
+      </div>
+      <div class="vocab-grid">
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">arbitration logic</div><div class="vocab-pos">noun phrase</div><div class="vocab-jp">調停ロジック</div><span class="vocab-badge badge-tech">技術用語</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"Arbitration logic determines which command takes priority when multiple inputs conflict simultaneously."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">fitment rate</div><div class="vocab-pos">noun phrase</div><div class="vocab-jp">装備率・搭載率</div><span class="vocab-badge badge-tech">技術用語</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"The fitment rate of E-latches in mass-market vehicles is still low, but Honda aims to change that."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">mechatronic unit</div><div class="vocab-pos">noun phrase</div><div class="vocab-jp">機電一体ユニット</div><span class="vocab-badge badge-tech">技術用語</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"A mechatronic unit combines the ECU and actuator into one assembly, eliminating separate harness connections."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">reconfigurable</div><div class="vocab-pos">adjective</div><div class="vocab-jp">再配置・再構成できる</div><span class="vocab-badge badge-key">重要フレーズ</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"We want hardware and software that is easily separable and reconfigurable as architecture evolves."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">domain to define and own</div><div class="vocab-pos">phrase</div><div class="vocab-jp">定義し責任を持つ領域</div><span class="vocab-badge badge-key">重要フレーズ</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"We see the sub-system below the area ECU as our domain to define and own."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">align with you on</div><div class="vocab-pos">verb phrase</div><div class="vocab-jp">〜について認識を合わせる</div><span class="vocab-badge badge-phrase">会話表現</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"We'd love to align with you on this direction before moving to the next development phase."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">still at the concept stage</div><div class="vocab-pos">phrase</div><div class="vocab-jp">まだ構想段階</div><span class="vocab-badge badge-phrase">会話表現</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"This is still at the concept stage, but we believe it's the right direction to pursue."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">migrate upward</div><div class="vocab-pos">verb phrase</div><div class="vocab-jp">上位に移行する</div><span class="vocab-badge badge-tech">技術用語</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"Variable functions can be migrated upward to the central ECU without any hardware redesign."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">value-added services</div><div class="vocab-pos">noun phrase</div><div class="vocab-jp">付加価値サービス</div><span class="vocab-badge badge-key">重要フレーズ</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"Our system knowledge enables us to offer software-based value-added services that go beyond hardware."</div>
+        </div>
+        <div class="vocab-card" onclick="this.classList.toggle('open')">
+          <div class="vocab-header"><div><div class="vocab-word">moving toward a model where</div><div class="vocab-pos">phrase</div><div class="vocab-jp">〜というモデルに向かっている</div><span class="vocab-badge badge-phrase">会話表現</span></div><div class="vocab-chevron">▾</div></div>
+          <div class="vocab-ex">"The industry is moving toward a model where software defines the entire vehicle experience."</div>
+        </div>
+      </div>
+      <button class="quiz-btn" onclick="alert('Claudeとのチャット画面に戻って、クイズをリクエストしてみてください！')">Claudeにクイズを出してもらう →</button>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// Tab switching
+function switchTab(id, el){
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  el.classList.add('active');
+}
+
+// Popup toggle
+const viewed = new Set();
+function toggle(id){
+  const el = document.getElementById(id);
+  const isOpen = el.classList.contains('show');
+  document.querySelectorAll('.popup').forEach(p=>p.classList.remove('show'));
+  if(!isOpen){
+    el.classList.add('show');
+    viewed.add(id);
+    updateProgress();
+  }
+}
+function closePopup(id){
+  document.getElementById(id).classList.remove('show');
+  event.stopPropagation();
+}
+function updateProgress(){
+  const total = 11;
+  const count = viewed.size;
+  document.getElementById('progressCount').textContent = count;
+  document.getElementById('progressBar').style.width = (count/total*100)+'%';
+}
+
+// Audio (TTS via Web Speech API)
+const fullScript = `Today, I'd like to share our thinking on E/E architecture toward realizing a stress-free vehicle experience — automatic door opening, human-sensing services, and seamless OTA updates.
+
+The core challenge we're addressing is this: current architectures distribute intelligence — like arbitration logic — across many edge ECUs. This makes OTA updates complex and hardware changes frequent. Looking ahead, we believe the industry is moving toward a model where variable logic is centralized in higher-level ECUs, with edge ECUs retaining only the minimum necessary to drive actuators. This is the future direction we're preparing for.
+
+A key part of our concept is that everything below the area ECU — all variable elements — would be absorbed within that zone. Importantly, we see the system architecture below the area ECU as our domain to define and own. This is not just a component play — we want to take responsibility for the full sub-system specification in that zone.
+
+Our current thinking is to have one ECU drive both front and rear door components, focusing integration on high-fitment-rate components — door mirrors, windows, and E-latches — while keeping highly optional components separate.
+
+As a company that handles a wide range of system products across domains, we have the system-level knowledge to propose solutions that go beyond individual components — for example, software-based value-added services tied to the overall architecture.
+
+The most critical message I want to share today is this: the optimal E/E architecture will depend on volume, fitment rates, and target services. But it is essential that we start now — designing both hardware and software to be easily separable and reconfigurable. What we are currently planning — still at the concept stage — is to develop single-function ECUs so that individual functions can later be extracted and migrated upward without impacting other functions. If cost optimization points toward it, a mechatronic unit — combining electronics and mechanics in one assembly — is also a valid path. We'd love to align with you on this direction.`;
+
+let utterance = null;
+let isPlaying = false;
+let speeds = [0.75, 1.0, 1.25, 1.5];
+let speedIdx = 1;
+let elapsedTime = 0;
+let totalEstimate = 150;
+let timerInterval = null;
+
+function togglePlay(){
+  if(!('speechSynthesis' in window)){
+    alert('お使いのブラウザはWeb音声合成をサポートしていません。Google Chromeでお試しください。');
+    return;
+  }
+  if(isPlaying){
+    speechSynthesis.cancel();
+    clearInterval(timerInterval);
+    isPlaying = false;
+    document.getElementById('playBtn').classList.remove('playing');
+  } else {
+    startSpeech();
+  }
+}
+
+function startSpeech(){
+  speechSynthesis.cancel();
+  utterance = new SpeechSynthesisUtterance(fullScript);
+  utterance.lang = 'en-US';
+  utterance.rate = speeds[speedIdx];
+
+  // Pick English voice if available
+  const voices = speechSynthesis.getVoices();
+  const enVoice = voices.find(v=>v.lang.startsWith('en-') && v.name.includes('Google')) ||
+                  voices.find(v=>v.lang.startsWith('en-'));
+  if(enVoice) utterance.voice = enVoice;
+
+  totalEstimate = Math.round(fullScript.split(' ').length / (speeds[speedIdx] * 2.5));
+  elapsedTime = 0;
+
+  utterance.onstart = ()=>{
+    isPlaying = true;
+    document.getElementById('playBtn').classList.add('playing');
+    timerInterval = setInterval(()=>{
+      elapsedTime++;
+      const pct = Math.min(elapsedTime/totalEstimate*100, 99);
+      document.getElementById('timelineFill').style.width = pct+'%';
+      document.getElementById('audioTime').textContent = formatTime(elapsedTime)+' / ~'+formatTime(totalEstimate);
+    },1000);
+  };
+  utterance.onend = ()=>{
+    isPlaying = false;
+    clearInterval(timerInterval);
+    document.getElementById('playBtn').classList.remove('playing');
+    document.getElementById('timelineFill').style.width = '100%';
+    document.getElementById('audioTime').textContent = formatTime(totalEstimate)+' / '+formatTime(totalEstimate);
+  };
+  utterance.onerror = ()=>{
+    isPlaying = false;
+    clearInterval(timerInterval);
+    document.getElementById('playBtn').classList.remove('playing');
+  };
+  speechSynthesis.speak(utterance);
+}
+
+function formatTime(sec){
+  return Math.floor(sec/60)+':'+(sec%60<10?'0':'')+sec%60;
+}
+
+function cycleSpeed(){
+  speedIdx = (speedIdx+1)%speeds.length;
+  document.getElementById('speedBtn').textContent = speeds[speedIdx].toFixed(2).replace('.00','').replace(/\.(\d)$/,'.$10')+'×';
+  if(isPlaying){
+    speechSynthesis.cancel();
+    clearInterval(timerInterval);
+    isPlaying = false;
+    document.getElementById('playBtn').classList.remove('playing');
+    setTimeout(()=>startSpeech(),100);
+  }
+}
+
+function seekAudio(e){
+  const rect = e.currentTarget.getBoundingClientRect();
+  const pct = (e.clientX - rect.left) / rect.width;
+  elapsedTime = Math.round(pct * totalEstimate);
+  document.getElementById('timelineFill').style.width = (pct*100)+'%';
+}
+
+// Load voices async
+if('speechSynthesis' in window){
+  speechSynthesis.onvoiceschanged = ()=>{ speechSynthesis.getVoices(); };
+}
+</script>
+</body>
+</html>
